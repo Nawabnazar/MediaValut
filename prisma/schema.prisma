@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Media {
+  id            String   @id @default(cuid())
+  fileName      String
+  filePath      String
+  mediaType     String
+  uploadDate    DateTime @default(now())
+  fileSize      Int
+  thumbnailPath String?
+
+  @@index([mediaType])
+  @@index([uploadDate])
+  @@index([fileName])
+}
