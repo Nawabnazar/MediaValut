@@ -26,13 +26,8 @@ export function MediaCard({
   const ref = useRef<HTMLDivElement>(null);
   const [loaded, setLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const {
-    hoveredItem,
-    setHoveredItem,
-    setBackgroundItem,
-    setSelectedItem,
-    setViewerOpen,
-  } = useMediaContext();
+  const { hoveredItem, setHoveredItem, setSelectedItem, setViewerOpen } =
+    useMediaContext();
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -46,7 +41,6 @@ export function MediaCard({
 
   const handleMouseEnter = () => {
     setHoveredItem(item);
-    setBackgroundItem(item);
     if (isVideo && videoRef.current) {
       videoRef.current.currentTime = 0;
       videoRef.current.play().catch(() => undefined);
@@ -55,7 +49,6 @@ export function MediaCard({
 
   const handleMouseLeave = () => {
     setHoveredItem(null);
-    setBackgroundItem(null);
     if (isVideo && videoRef.current) {
       videoRef.current.pause();
     }

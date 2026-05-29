@@ -13,10 +13,15 @@ import { UploadSuccessToast } from "@/components/ui/UploadSuccessToast";
 import { FullScreenViewer } from "@/components/viewer/FullScreenViewer";
 import { UploadDropzone } from "@/components/upload/UploadDropzone";
 import { useMediaFetch } from "@/hooks/useMediaFetch";
+import type { UploadConfig } from "@/types/upload";
 
 export function MediaVaultDashboard() {
   const { isLoading } = useMediaFetch();
   const [headerUploadOpen, setHeaderUploadOpen] = useState(false);
+  const [headerUploadConfig] = useState<UploadConfig>({
+    mediaType: "image",
+    mode: "multiple",
+  });
 
   return (
     <div className="relative min-h-screen">
@@ -41,7 +46,7 @@ export function MediaVaultDashboard() {
       <UploadDropzone
         open={headerUploadOpen}
         onClose={() => setHeaderUploadOpen(false)}
-        accept="both"
+        config={headerUploadConfig}
       />
       <UploadSuccessToast />
       <FullScreenViewer />

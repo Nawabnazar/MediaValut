@@ -1,21 +1,70 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ImagePlus, Plus, Video } from "lucide-react";
+import {
+  FolderOpen,
+  ImageIcon,
+  ImagePlus,
+  Plus,
+  Video,
+} from "lucide-react";
 import { useState } from "react";
 import { UploadDropzone } from "@/components/upload/UploadDropzone";
 import { cn } from "@/lib/utils";
+import type { UploadConfig } from "@/types/upload";
+
+const defaultConfig: UploadConfig = {
+  mediaType: "image",
+  mode: "multiple",
+};
 
 export function FloatingUploadButton() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropzoneOpen, setDropzoneOpen] = useState(false);
-  const [accept, setAccept] = useState<"image" | "video" | "both">("both");
+  const [config, setConfig] = useState<UploadConfig>(defaultConfig);
 
-  const openDropzone = (type: "image" | "video" | "both") => {
-    setAccept(type);
+  const openUpload = (next: UploadConfig) => {
+    setConfig(next);
     setMenuOpen(false);
     setDropzoneOpen(true);
   };
+
+  const menuItems: {
+    label: string;
+    icon: typeof ImageIcon;
+    config: UploadConfig;
+  }[] = [
+    {
+      label: "Single photo",
+      icon: ImageIcon,
+      config: { mediaType: "image", mode: "single" },
+    },
+    {
+      label: "Upload folder",
+      icon: FolderOpen,
+      config: { mediaType: "image", mode: "folder" },
+    },
+    {
+      label: "Multiple photos",
+      icon: ImagePlus,
+      config: { mediaType: "image", mode: "multiple" },
+    },
+    {
+      label: "Single video",
+      icon: Video,
+      config: { mediaType: "video", mode: "single" },
+    },
+    {
+      label: "Video folder",
+      icon: FolderOpen,
+      config: { mediaType: "video", mode: "folder" },
+    },
+    {
+      label: "Multiple videos",
+      icon: Video,
+      config: { mediaType: "video", mode: "multiple" },
+    },
+  ];
 
   return (
     <>
@@ -26,24 +75,19 @@ export function FloatingUploadButton() {
               initial={{ opacity: 0, y: 12, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 12, scale: 0.9 }}
-              className="flex flex-col gap-2 rounded-[20px] glass-strong p-2 shadow-2xl"
+              className="flex max-h-[70vh] flex-col gap-1 overflow-y-auto rounded-[20px] glass-strong p-2 shadow-2xl scrollbar-hide"
             >
-              <button
-                type="button"
-                onClick={() => openDropzone("image")}
-                className="flex items-center gap-3 rounded-[16px] px-4 py-3 text-sm font-medium text-white hover:bg-white/10"
-              >
-                <ImagePlus className="h-5 w-5 text-primary-light" />
-                Upload Images
-              </button>
-              <button
-                type="button"
-                onClick={() => openDropzone("video")}
-                className="flex items-center gap-3 rounded-[16px] px-4 py-3 text-sm font-medium text-white hover:bg-white/10"
-              >
-                <Video className="h-5 w-5 text-primary-light" />
-                Upload Videos
-              </button>
+              {menuItems.map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => openUpload(item.config)}
+                  className="flex items-center gap-3 rounded-[16px] px-4 py-3 text-left text-sm font-medium text-white hover:bg-white/10"
+                >
+                  <item.icon className="h-5 w-5 shrink-0 text-primary-light" />
+                  {item.label}
+                </button>
+              ))}
             </motion.div>
           )}
         </AnimatePresence>
@@ -71,7 +115,7 @@ export function FloatingUploadButton() {
       <UploadDropzone
         open={dropzoneOpen}
         onClose={() => setDropzoneOpen(false)}
-        accept={accept}
+        config={config}
       />
     </>
   );
