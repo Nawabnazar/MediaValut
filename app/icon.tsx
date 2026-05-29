@@ -32,4 +32,3 @@ export default function Icon() {
   );
 }
 
-// export const runtime = "edge";
