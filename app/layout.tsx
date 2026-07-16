@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { MediaProvider } from "@/contexts/MediaContext";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default function RootLayout({
         <ThemeProvider>
           <MediaProvider>{children}</MediaProvider>
         </ThemeProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
