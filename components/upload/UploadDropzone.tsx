@@ -66,9 +66,9 @@ export function UploadDropzone({ open, onClose, config }: UploadDropzoneProps) {
         const meta =
           mode === "folder"
             ? {
-                folderGroupId: createFolderGroupId(),
-                folderName: extractFolderName(rawFiles),
-              }
+              folderGroupId: createFolderGroupId(),
+              folderName: extractFolderName(rawFiles),
+            }
             : undefined;
 
         const items = await uploadFilesInBatches(
@@ -167,7 +167,7 @@ export function UploadDropzone({ open, onClose, config }: UploadDropzoneProps) {
             className="fixed inset-x-4 top-1/2 z-[95] mx-auto max-w-lg -translate-y-1/2 rounded-[24px] glass-strong p-6 shadow-2xl sm:inset-x-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex  items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-white">{title}</h3>
                 <p className="text-xs text-white/50">{hint}</p>
