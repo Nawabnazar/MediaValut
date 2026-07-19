@@ -16,6 +16,8 @@ import {
   filterFilesForUpload,
   uploadFilesInBatches,
   uploadModeLabel,
+  createFolderGroupId,
+  extractFolderName,
 } from "@/lib/upload-client";
 import { cn } from "@/lib/utils";
 import { useMediaContext } from "@/contexts/MediaContext";
@@ -61,11 +63,23 @@ export function UploadDropzone({ open, onClose, config }: UploadDropzoneProps) {
       setTotalCount(files.length);
 
       try {
-        const items = await uploadFilesInBatches(files, (pct, done, total) => {
-          setProgress(pct);
-          setUploadedCount(done);
-          setTotalCount(total);
-        });
+        const meta =
+          mode === "folder"
+            ? {
+              folderGroupId: createFolderGroupId(),
+              folderName: extractFolderName(rawFiles),
+            }
+            : undefined;
+
+        const items = await uploadFilesInBatches(
+          files,
+          (pct, done, total) => {
+            setProgress(pct);
+            setUploadedCount(done);
+            setTotalCount(total);
+          },
+          meta
+        );
 
         invalidateCache(MEDIA_LIST_KEY);
         addItems(items);
@@ -153,7 +167,7 @@ export function UploadDropzone({ open, onClose, config }: UploadDropzoneProps) {
             className="fixed inset-x-4 top-1/2 z-[95] mx-auto max-w-lg -translate-y-1/2 rounded-[24px] glass-strong p-6 shadow-2xl sm:inset-x-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex  items-center justify-between">
               <div>
                 <h3 className="text-lg font-semibold text-white">{title}</h3>
                 <p className="text-xs text-white/50">{hint}</p>

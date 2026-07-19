@@ -1,10 +1,18 @@
-import fs from "fs/promises";
-import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { serializeMedia } from "@/lib/media";
+import { deleteMediaFile } from "@/lib/storage";
 
 type RouteContext = { params: Promise<{ id: string }> };
+
+function bucketForPath(
+  filePath: string,
+  mediaType: string
+): "images" | "videos" | "thumbnails" {
+  if (filePath.includes("/thumbnails/") || filePath.includes("thumbnails"))
+    return "thumbnails";
+  return mediaType === "video" ? "videos" : "images";
+}
 
 export async function GET(_request: NextRequest, context: RouteContext) {
   try {
@@ -48,11 +56,6 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 }
 
-async function deleteFile(relativePath: string) {
-  const fullPath = path.join(process.cwd(), "public", relativePath);
-  await fs.unlink(fullPath).catch(() => undefined);
-}
-
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
     const { id } = await context.params;
@@ -62,9 +65,12 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await deleteFile(item.filePath.replace(/^\//, ""));
+    await deleteMediaFile(
+      item.filePath,
+      bucketForPath(item.filePath, item.mediaType)
+    );
     if (item.thumbnailPath) {
-      await deleteFile(item.thumbnailPath.replace(/^\//, ""));
+      await deleteMediaFile(item.thumbnailPath, "thumbnails");
     }
 
     await prisma.media.delete({ where: { id } });

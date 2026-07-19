@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
+    "@supabase/server": "^1.4.0",
     "@supabase/ssr": "^0.12.3",
     "@supabase/supabase-js": "^2.110.7",
     "@tanstack/react-virtual": "^3.13.10",
@@ -39,7 +40,7 @@
     "@types/react-dom": "^19.1.5",
     "eslint": "^9.28.0",
     "eslint-config-next": "^15.3.3",
-    "prisma": "^6.9.0",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4.1.8",
     "typescript": "^5.8.3"
   }

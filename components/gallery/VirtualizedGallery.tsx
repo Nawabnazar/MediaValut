@@ -1,9 +1,11 @@
 "use client";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { MediaCard } from "@/components/gallery/MediaCard";
+import { FolderStack } from "@/components/gallery/FolderStack";
 import { useMediaContext } from "@/contexts/MediaContext";
+import type { MediaItem } from "@/types/media";
 
 function getColumnCount(width: number): number {
   if (width >= 1280) return 5;
@@ -17,7 +19,7 @@ interface VirtualizedGalleryProps {
 }
 
 export function VirtualizedGallery({ startIndex = 0 }: VirtualizedGalleryProps) {
-  const { filteredItems, hoveredItem } = useMediaContext();
+  const { filteredItems, hoveredItem, hoveredFolderId, setHoveredFolderId } = useMediaContext();
   const items = filteredItems.slice(startIndex);
   const parentRef = useRef<HTMLDivElement>(null);
   const [columnCount, setColumnCount] = useState(4);
@@ -29,7 +31,43 @@ export function VirtualizedGallery({ startIndex = 0 }: VirtualizedGalleryProps) 
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  const rowCount = Math.ceil(items.length / columnCount) || 1;
+  // Preprocess items to group unhovered folder items into a single folder stack item
+  const renderableItems = useMemo(() => {
+    const result: (
+      | { type: "single"; item: MediaItem }
+      | { type: "folder"; id: string; name: string; items: MediaItem[] }
+    )[] = [];
+    const processedFolders = new Set<string>();
+
+    items.forEach((item) => {
+      if (item.folderGroupId) {
+        if (hoveredFolderId === item.folderGroupId) {
+          // If the folder is hovered, render all items inside it as singles
+          result.push({ type: "single", item });
+        } else {
+          // If the folder is not hovered, render only one stack card for this group
+          if (!processedFolders.has(item.folderGroupId)) {
+            processedFolders.add(item.folderGroupId);
+            const folderItems = items.filter(
+              (i) => i.folderGroupId === item.folderGroupId
+            );
+            result.push({
+              type: "folder",
+              id: item.folderGroupId,
+              name: item.folderName ?? "Uploaded folder",
+              items: folderItems,
+            });
+          }
+        }
+      } else {
+        result.push({ type: "single", item });
+      }
+    });
+
+    return result;
+  }, [items, hoveredFolderId]);
+
+  const rowCount = Math.ceil(renderableItems.length / columnCount) || 1;
 
   const rowVirtualizer = useVirtualizer({
     count: rowCount,
@@ -38,7 +76,7 @@ export function VirtualizedGallery({ startIndex = 0 }: VirtualizedGalleryProps) 
     overscan: 4,
   });
 
-  if (!items.length) return null;
+  if (!renderableItems.length) return null;
 
   return (
     <div
@@ -54,7 +92,7 @@ export function VirtualizedGallery({ startIndex = 0 }: VirtualizedGalleryProps) 
       >
         {rowVirtualizer.getVirtualItems().map((virtualRow) => {
           const start = virtualRow.index * columnCount;
-          const rowItems = items.slice(start, start + columnCount);
+          const rowItems = renderableItems.slice(start, start + columnCount);
 
           return (
             <div
@@ -71,16 +109,29 @@ export function VirtualizedGallery({ startIndex = 0 }: VirtualizedGalleryProps) 
                 paddingBottom: "1rem",
               }}
             >
-              {rowItems.map((item, colIndex) => (
-                <MediaCard
-                  key={item.id}
-                  item={item}
-                  index={startIndex + start + colIndex}
-                  isDimmed={
-                    hoveredItem !== null && hoveredItem.id !== item.id
-                  }
-                />
-              ))}
+              {rowItems.map((renderItem, colIndex) => {
+                if (renderItem.type === "folder") {
+                  return (
+                    <FolderStack
+                      key={renderItem.id}
+                      name={renderItem.name}
+                      items={renderItem.items}
+                      onMouseEnter={() => setHoveredFolderId(renderItem.id)}
+                    />
+                  );
+                }
+
+                return (
+                  <MediaCard
+                    key={renderItem.item.id}
+                    item={renderItem.item}
+                    index={startIndex + start + colIndex}
+                    isDimmed={
+                      hoveredItem !== null && hoveredItem.id !== renderItem.item.id
+                    }
+                  />
+                );
+              })}
             </div>
           );
         })}

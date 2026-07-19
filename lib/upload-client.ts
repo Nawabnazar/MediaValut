@@ -6,6 +6,11 @@ const VIDEO_EXT = /\.(mp4|webm|mov|ogg|m4v|avi|mkv)$/i;
 
 const BATCH_SIZE = 12;
 
+export interface UploadBatchMeta {
+  folderGroupId?: string;
+  folderName?: string;
+}
+
 export function filterFilesForUpload(
   files: File[],
   mediaType: UploadMediaType
@@ -15,10 +20,8 @@ export function filterFilesForUpload(
     if (!name || name.startsWith(".") || name === ".DS_Store") return false;
 
     const mime = file.type.toLowerCase();
-    const isImage =
-      mime.startsWith("image/") || IMAGE_EXT.test(name);
-    const isVideo =
-      mime.startsWith("video/") || VIDEO_EXT.test(name);
+    const isImage = mime.startsWith("image/") || IMAGE_EXT.test(name);
+    const isVideo = mime.startsWith("video/") || VIDEO_EXT.test(name);
 
     if (mediaType === "image") return isImage;
     if (mediaType === "video") return isVideo;
@@ -26,9 +29,22 @@ export function filterFilesForUpload(
   });
 }
 
+export function createFolderGroupId(): string {
+  return `folder_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+export function extractFolderName(files: File[]): string {
+  const withPath = files.find((f) => f.webkitRelativePath);
+  if (withPath?.webkitRelativePath) {
+    return withPath.webkitRelativePath.split("/")[0] ?? "Uploaded folder";
+  }
+  return "Uploaded folder";
+}
+
 export async function uploadFilesInBatches(
   files: File[],
-  onProgress: (percent: number, uploaded: number, total: number) => void
+  onProgress: (percent: number, uploaded: number, total: number) => void,
+  meta?: UploadBatchMeta
 ): Promise<MediaItem[]> {
   const results: MediaItem[] = [];
   const total = files.length;
@@ -37,6 +53,12 @@ export async function uploadFilesInBatches(
     const batch = files.slice(i, i + BATCH_SIZE);
     const formData = new FormData();
     batch.forEach((file) => formData.append("files", file));
+    if (meta?.folderGroupId) {
+      formData.append("folderGroupId", meta.folderGroupId);
+    }
+    if (meta?.folderName) {
+      formData.append("folderName", meta.folderName);
+    }
 
     const res = await fetch("/api/upload", {
       method: "POST",
@@ -64,8 +86,14 @@ export function uploadModeLabel(
   mode: UploadMode,
   mediaType: UploadMediaType
 ): string {
-  const kind = mediaType === "video" ? "videos" : mediaType === "image" ? "photos" : "media";
-  if (mode === "single") return `Single ${mediaType === "video" ? "video" : "photo"}`;
+  const kind =
+    mediaType === "video"
+      ? "videos"
+      : mediaType === "image"
+        ? "photos"
+        : "media";
+  if (mode === "single")
+    return `Single ${mediaType === "video" ? "video" : "photo"}`;
   if (mode === "folder") return `Folder of ${kind}`;
   return `Multiple ${kind}`;
 }

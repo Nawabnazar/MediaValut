@@ -26,7 +26,7 @@ export function MediaCard({
   const ref = useRef<HTMLDivElement>(null);
   const [loaded, setLoaded] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { hoveredItem, setHoveredItem, setSelectedItem, setViewerOpen } =
+  const { hoveredItem, setHoveredItem, setSelectedItem, setViewerOpen, setHoveredFolderId } =
     useMediaContext();
 
   const { scrollYProgress } = useScroll({
@@ -41,6 +41,9 @@ export function MediaCard({
 
   const handleMouseEnter = () => {
     setHoveredItem(item);
+    if (item.folderGroupId) {
+      setHoveredFolderId(item.folderGroupId);
+    }
     if (isVideo && videoRef.current) {
       videoRef.current.currentTime = 0;
       videoRef.current.play().catch(() => undefined);
@@ -49,6 +52,9 @@ export function MediaCard({
 
   const handleMouseLeave = () => {
     setHoveredItem(null);
+    if (item.folderGroupId) {
+      setHoveredFolderId(null);
+    }
     if (isVideo && videoRef.current) {
       videoRef.current.pause();
     }
@@ -118,6 +124,14 @@ export function MediaCard({
         {!loaded && (
           <div className="absolute inset-0 skeleton-shimmer" aria-hidden />
         )}
+
+        {/* Upload Timestamp Badge */}
+        <div className="absolute left-3 top-3 z-30 select-none pointer-events-none">
+          <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-black/45 backdrop-blur-md border border-white/10 text-white/90 shadow-sm">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+            {formatDate(item.uploadDate)}
+          </span>
+        </div>
 
         {isVideo ? (
           <>
