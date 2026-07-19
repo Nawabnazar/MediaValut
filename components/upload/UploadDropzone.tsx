@@ -16,6 +16,8 @@ import {
   filterFilesForUpload,
   uploadFilesInBatches,
   uploadModeLabel,
+  createFolderGroupId,
+  extractFolderName,
 } from "@/lib/upload-client";
 import { cn } from "@/lib/utils";
 import { useMediaContext } from "@/contexts/MediaContext";
@@ -61,11 +63,23 @@ export function UploadDropzone({ open, onClose, config }: UploadDropzoneProps) {
       setTotalCount(files.length);
 
       try {
-        const items = await uploadFilesInBatches(files, (pct, done, total) => {
-          setProgress(pct);
-          setUploadedCount(done);
-          setTotalCount(total);
-        });
+        const meta =
+          mode === "folder"
+            ? {
+                folderGroupId: createFolderGroupId(),
+                folderName: extractFolderName(rawFiles),
+              }
+            : undefined;
+
+        const items = await uploadFilesInBatches(
+          files,
+          (pct, done, total) => {
+            setProgress(pct);
+            setUploadedCount(done);
+            setTotalCount(total);
+          },
+          meta
+        );
 
         invalidateCache(MEDIA_LIST_KEY);
         addItems(items);

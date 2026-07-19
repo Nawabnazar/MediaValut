@@ -24,6 +24,35 @@ export function formatDate(date: string | Date): string {
   });
 }
 
+export function formatUploadTimestamp(date: string | Date): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return d.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+  });
+}
+
+export function encodeMediaPath(filePath: string): string {
+  if (!filePath) return filePath;
+  if (filePath.startsWith("http://") || filePath.startsWith("https://")) {
+    return filePath;
+  }
+  const [pathname, ...query] = filePath.split("?");
+  const encoded =
+    "/" +
+    pathname
+      .split("/")
+      .filter(Boolean)
+      .map((segment) => encodeURIComponent(segment))
+      .join("/");
+  return query.length ? `${encoded}?${query.join("?")}` : encoded;
+}
+
 export function sanitizeFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
@@ -38,16 +67,3 @@ export function uniqueFileName(original: string): string {
   return ext ? `${base}_${stamp}_${random}.${ext}` : `${base}_${stamp}_${random}`;
 }
 
-/** Encode each path segment so spaces/special chars in uploaded filenames work in URLs */
-export function encodeMediaPath(filePath: string): string {
-  if (!filePath) return filePath;
-  const [pathname, ...query] = filePath.split("?");
-  const encoded =
-    "/" +
-    pathname
-      .split("/")
-      .filter(Boolean)
-      .map((segment) => encodeURIComponent(segment))
-      .join("/");
-  return query.length ? `${encoded}?${query.join("?")}` : encoded;
-}

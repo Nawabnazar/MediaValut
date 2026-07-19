@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -15,8 +15,11 @@ model Media {
   uploadDate    DateTime @default(now())
   fileSize      Int
   thumbnailPath String?
+  folderGroupId String?
+  folderName    String?
 
   @@index([mediaType])
   @@index([uploadDate])
   @@index([fileName])
+  @@index([folderGroupId])
 }

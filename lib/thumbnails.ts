@@ -1,48 +1,47 @@
 import fs from "fs/promises";
 import path from "path";
 import sharp from "sharp";
+import { saveMediaFile } from "@/lib/storage";
 
-const THUMB_DIR = path.join(process.cwd(), "public/uploads/thumbnails");
 const THUMB_WIDTH = 480;
 const THUMB_HEIGHT = 360;
 
-export async function ensureThumbnailDir(): Promise<void> {
-  await fs.mkdir(THUMB_DIR, { recursive: true });
+export async function generateImageThumbnailFromBuffer(
+  buffer: Buffer,
+  fileName: string
+): Promise<string> {
+  const thumbName = `thumb_${path.parse(fileName).name}.webp`;
+  const webp = await sharp(buffer)
+    .resize(THUMB_WIDTH, THUMB_HEIGHT, { fit: "cover", position: "centre" })
+    .webp({ quality: 82 })
+    .toBuffer();
+
+  return saveMediaFile("thumbnails", thumbName, webp, "image/webp");
 }
 
 export async function generateImageThumbnail(
   sourcePath: string,
   fileName: string
 ): Promise<string> {
-  await ensureThumbnailDir();
-  const thumbName = `thumb_${path.parse(fileName).name}.webp`;
-  const thumbPath = path.join(THUMB_DIR, thumbName);
-
-  await sharp(sourcePath)
-    .resize(THUMB_WIDTH, THUMB_HEIGHT, {
-      fit: "cover",
-      position: "centre",
-    })
-    .webp({ quality: 82 })
-    .toFile(thumbPath);
-
-  return `/uploads/thumbnails/${thumbName}`;
+  const buffer = await fs.readFile(sourcePath);
+  return generateImageThumbnailFromBuffer(buffer, fileName);
 }
 
 export async function generateVideoThumbnail(
   sourcePath: string,
   fileName: string
 ): Promise<string> {
-  await ensureThumbnailDir();
   const thumbName = `thumb_${path.parse(fileName).name}.webp`;
-  const thumbPath = path.join(THUMB_DIR, thumbName);
+  let webp: Buffer;
 
   try {
     const { execFile } = await import("child_process");
     const { promisify } = await import("util");
     const execFileAsync = promisify(execFile);
+    const tempDir = path.join(process.cwd(), "public/uploads/temp");
+    await fs.mkdir(tempDir, { recursive: true });
+    const tempPng = path.join(tempDir, `temp_${Date.now()}.png`);
 
-    const tempPng = path.join(THUMB_DIR, `temp_${Date.now()}.png`);
     await execFileAsync("ffmpeg", [
       "-y",
       "-i",
@@ -56,14 +55,14 @@ export async function generateVideoThumbnail(
       tempPng,
     ]);
 
-    await sharp(tempPng)
+    webp = await sharp(tempPng)
       .resize(THUMB_WIDTH, THUMB_HEIGHT, { fit: "cover" })
       .webp({ quality: 82 })
-      .toFile(thumbPath);
+      .toBuffer();
 
     await fs.unlink(tempPng).catch(() => undefined);
   } catch {
-    await sharp({
+    webp = await sharp({
       create: {
         width: THUMB_WIDTH,
         height: THUMB_HEIGHT,
@@ -72,8 +71,8 @@ export async function generateVideoThumbnail(
       },
     })
       .webp({ quality: 80 })
-      .toFile(thumbPath);
+      .toBuffer();
   }
 
-  return `/uploads/thumbnails/${thumbName}`;
+  return saveMediaFile("thumbnails", thumbName, webp, "image/webp");
 }

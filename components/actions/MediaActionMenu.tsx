@@ -97,7 +97,7 @@ export function MediaActionMenu({ item, onView }: MediaActionMenuProps) {
       >
         <MoreVertical className="h-4 w-4" />
       </button>
-      <div></div>
+      
 
       <AnimatePresence>
         {open && (

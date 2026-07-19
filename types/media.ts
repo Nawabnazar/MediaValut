@@ -12,6 +12,15 @@ export interface MediaItem {
   uploadDate: string;
   fileSize: number;
   thumbnailPath: string | null;
+  folderGroupId: string | null;
+  folderName: string | null;
+}
+
+export interface MediaFolderGroup {
+  folderGroupId: string;
+  folderName: string;
+  items: MediaItem[];
+  uploadDate: string;
 }
 
 export interface MediaFilters {

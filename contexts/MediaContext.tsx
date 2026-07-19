@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -24,6 +25,8 @@ interface MediaContextValue {
   filteredItems: MediaItem[];
   hoveredItem: MediaItem | null;
   setHoveredItem: (item: MediaItem | null) => void;
+  hoveredFolderId: string | null;
+  setHoveredFolderId: (id: string | null) => void;
   backgroundItem: MediaItem | null;
   setBackgroundItem: (item: MediaItem | null) => void;
   selectedItem: MediaItem | null;
@@ -47,10 +50,27 @@ export function MediaProvider({ children }: { children: ReactNode }) {
   const [filters, setFilters] = useState<MediaFilters>(defaultFilters);
   const [activeTab, setActiveTab] = useState<TabType>("images");
   const [hoveredItem, setHoveredItem] = useState<MediaItem | null>(null);
+  const [hoveredFolderId, setHoveredFolderIdState] = useState<string | null>(null);
+  const folderHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [backgroundItem, setBackgroundItem] = useState<MediaItem | null>(null);
   const [selectedItem, setSelectedItem] = useState<MediaItem | null>(null);
   const [viewerOpen, setViewerOpen] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  const setHoveredFolderId = useCallback((id: string | null) => {
+    if (folderHoverTimeoutRef.current) {
+      clearTimeout(folderHoverTimeoutRef.current);
+      folderHoverTimeoutRef.current = null;
+    }
+
+    if (id === null) {
+      folderHoverTimeoutRef.current = setTimeout(() => {
+        setHoveredFolderIdState(null);
+      }, 100);
+    } else {
+      setHoveredFolderIdState(id);
+    }
+  }, []);
 
   const addItems = useCallback((newItems: MediaItem[]) => {
     setItems((prev) => [...newItems, ...prev]);
@@ -95,6 +115,8 @@ export function MediaProvider({ children }: { children: ReactNode }) {
       filteredItems,
       hoveredItem,
       setHoveredItem,
+      hoveredFolderId,
+      setHoveredFolderId,
       backgroundItem,
       setBackgroundItem,
       selectedItem,
@@ -113,6 +135,8 @@ export function MediaProvider({ children }: { children: ReactNode }) {
       activeTab,
       filteredItems,
       hoveredItem,
+      hoveredFolderId,
+      setHoveredFolderId,
       backgroundItem,
       selectedItem,
       viewerOpen,
